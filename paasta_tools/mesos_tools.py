@@ -660,3 +660,16 @@ def terminate_framework(framework_id):
     resp = requests.post('http://%s:%d/master/teardown' % (get_mesos_leader(), MESOS_MASTER_PORT),
                          data={"frameworkId": framework_id})
     resp.raise_for_status()
+
+
+def get_container_name(app_id, slave_hostname=None, task_id=None):
+    tasks = get_running_tasks_from_active_frameworks(app_id)
+    if task_id:
+        task = [task for task in tasks if task['id'] == task_id][0]
+    elif slave_hostname:
+        task = [task for task in tasks if slave_hostname in task.slave['hostname']][0]
+    else:
+        raise Exception("Couldn't find task")
+    container_name = "mesos-{0}.{1}".format(task.executor['tasks'][0]['slave_id'],
+                                            task.executor['container'])
+    return container_name
